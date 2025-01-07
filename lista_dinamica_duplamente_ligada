@@ -9,9 +9,9 @@ typedef struct {
     // outros campos...
 } REGISTRO;
 
-typedef struct tempRegistro {
+typedef struct aux {
     REGISTRO reg;
-    struct tempRegistro* prox;
+    struct aux *ant, *prox;
 } ELEMENTO;
 
 typedef ELEMENTO* PONT;
@@ -38,11 +38,11 @@ void inicializarLista(LISTA* l) {
 }
 
 void exibirLista(LISTA* l) {
-  PONT end = l->inicio;
+  PONT p = l->inicio;
   printf("Lista: \" ");
-  while (end != NULL) {
-    printf("%d ", end->reg.chave);
-    end = end->prox;
+  while (p != NULL) {
+    printf("%i ", p->reg.chave);
+    p = p->prox;
   }
   printf("\"\n");
 }
@@ -90,10 +90,24 @@ PONT buscaSeqExc(LISTA* l, TIPOCHAVE ch, PONT* ant) {
 
 bool excluirElemLista(LISTA* l, TIPOCHAVE ch) {
   PONT ant, i;
+
   i = buscaSeqExc(l, ch, &ant);
   if (i == NULL) return false;
-  if (ant == NULL) l->inicio = i->prox;
-  else ant->prox = i->prox;
+
+  if (ant == NULL) {
+    l->inicio = i->prox;
+    if (i->prox != NULL) {
+        i->prox->ant = NULL;
+    }
+  } else {
+    ant->prox = i->prox;
+    if (i->prox != NULL) {
+        i->prox->ant = ant;
+    }
+    else {
+        ant->prox = NULL;
+    }
+  }
   free(i);
   return true;
 }
@@ -111,15 +125,29 @@ void reinicializarLista(LISTA* l) {
 bool inserirElemListaOrd(LISTA* l, REGISTRO reg) {
   TIPOCHAVE ch = reg.chave;
   PONT ant, i;
+
   i = buscaSeqExc(l, ch, &ant);
   if (i != NULL) return false;
+
   i = (PONT)malloc(sizeof(ELEMENTO));
+  if (i == NULL) return false;
+
   i->reg = reg;
+  i->prox = NULL;
+  i->ant = NULL;
+
   if (ant == NULL) {
     i->prox = l->inicio;
+    if (l->inicio != NULL) {
+        l->inicio->ant = i;
+    }
     l->inicio = i;
   } else {
     i->prox = ant->prox;
+    i->ant = ant;
+    if (ant->prox != NULL) {
+        ant->prox->ant = i;
+    }
     ant->prox = i;
   }
   return true;
